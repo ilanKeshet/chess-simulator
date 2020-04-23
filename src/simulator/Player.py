@@ -27,6 +27,7 @@ class Player:
                 raise Exception("Player has too many pieces: {}".format(pieces))
             self._pieces: List[P] = pieces
 
+
     @staticmethod
     def findKing(pieces: List[P]) -> King:
         res = list(filter(Player.isKing, pieces))
