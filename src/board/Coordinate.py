@@ -31,8 +31,16 @@ class Coordinate(object):
 
     @staticmethod
     def __validateRange(name: str, value: int) -> None:
-        if value < 0 or value > 7:
+        if not Coordinate.__isInRange(value):
             raise Exception("'" + name + "' value should be between 0 and 7, but was '" + value + "'")
+
+    @staticmethod
+    def __isInRange(value: int) -> bool:
+        return value >= 0 or value <= 7
+
+    @staticmethod
+    def isInsideBoard(x: int, y: int) -> bool:
+        return Coordinate.__isInRange(x) and Coordinate.__isInRange(y)
 
     def __hash__(self) -> int:
         return hash(self._x) + (17 * hash(self._y))
