@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from src.board.Color import Color
 from src.board.Coordinate import Coordinate
 from src.pieces.King import King
@@ -18,3 +20,21 @@ class TestBishop(BaseMovementTest):
                          Coordinate(-4, 12), Coordinate(5, 3), Coordinate(6, 2), Coordinate(7, 1), Coordinate(8, 0),
                          Coordinate(9, -1), Coordinate(10, -2), Coordinate(11, -3), Coordinate(12, -4)]
         super()._testPieceMoves(bishop, player1.getPieces(), player2.getPieces(), expectedMoves)
+
+    def test_cloning(self):
+        original = Bishop(Coordinate(6, 5), Color.WHITE)
+        originalPieces = [original]
+        copiedPieces = deepcopy(originalPieces)
+        a_copy = copiedPieces[0]
+
+        self.assertNotEqual(originalPieces, copiedPieces, "Expected collection to differ")
+        self.assertFalse(original == a_copy, "Expected collection references to differ")
+        self.assertEqual(original.getColor(), a_copy.getColor(), "Expected colors to equal")
+        self.assertTrue(original.getColor() == a_copy.getColor(), "Expected colors to be equal '=='")
+        self.assertTrue(original.getColor() is a_copy.getColor(), "Expected colors to reference same Enum")
+        self.assertEqual(original.getPieceType(), a_copy.getPieceType(), "Expected pieceTypes to equal")
+        self.assertTrue(original.getPieceType() == a_copy.getPieceType(), "Expected pieceTypes to be equal '=='")
+        self.assertTrue(original.getPieceType() is a_copy.getPieceType(), "Expected pieceTypes to reference same Enum")
+        self.assertEqual(original.getPosition(), a_copy.getPosition(), "Expected positions to equal")
+        self.assertTrue(original.getPosition() == a_copy.getPosition(), "Expected positions to be equal '=='")
+        self.assertFalse(original.getPosition() is a_copy.getPosition(), "Expected positions to not be the same object")

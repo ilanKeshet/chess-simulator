@@ -1,5 +1,4 @@
 from typing import Dict, TypeVar, Iterable
-from itertools import chain
 
 from src.board.Color import Color
 from src.board.Coordinate import Coordinate
@@ -11,19 +10,22 @@ C = TypeVar('C', bound='Coordinate')
 
 class Board(object):
 
-    def __init__(self, player1Pieces: Iterable[P], player2Pieces: Iterable[P]):
-        self.board: Dict[C, P] = {}
-        for piece in chain(player1Pieces, player2Pieces):
-            prev: Piece = self.board.get(piece.getPosition())
+    def __init__(self, pieces: Iterable[P]):
+        self._pieceDictionary: Dict[C, P] = {}
+        for piece in pieces:
+            prev: Piece = self._pieceDictionary.get(piece.getPosition())
             if prev is not None:
                 raise Exception(
                     "piece placement conflict, for position '{}'. existing value: '{}' new value: '{}'."
                     .format(piece.getPosition(), prev, piece))
-            self.board[piece.getPosition()] = piece
+            self._pieceDictionary[piece.getPosition()] = piece
         self.printBoard()
 
+    def _getPieceDictionary(self) -> Dict[C, P]:
+        return self._pieceDictionary
+
     def printBoard(self) -> None:
-        Board.printDict(self.board)
+        Board.printDict(self._pieceDictionary)
 
     @staticmethod
     def printDict(dict) -> None:
@@ -40,7 +42,7 @@ class Board(object):
         print("")
 
     def isVacant(self, position: Coordinate) -> bool:
-        return self.board.get(position, None) is None
+        return self._getPieceDictionary().get(position, None) is None
 
     def canPieceAtPositionBeEaten(self, position: Coordinate, color: Color) -> bool:
-        return not self.isVacant(position) and self.board.get(position).getColor() != color
+        return not self.isVacant(position) and self._getPieceDictionary().get(position).getColor() != color

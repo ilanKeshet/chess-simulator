@@ -1,86 +1,36 @@
-from typing import List, TypeVar
+from typing import List, TypeVar, Iterable
 
+from src.board.Board import Board
 from src.board.Color import Color
-from src.board.Coordinate import Coordinate
-from src.pieces.Bishop import Bishop
-from src.pieces.King import King
-from src.pieces.Knight import Knight
-from src.pieces.Pawn import Pawn
-from src.pieces.PieceType import PieceType
-from src.pieces.Queen import Queen
-from src.pieces.Rook import Rook
-from src.pieces.Piece import Piece
+from src.board.Move import Move
 
 P = TypeVar('P', bound='Piece')
 
 
 class Player:
 
-    def __init__(self, color: Color, pieces: List[P]=[]):
+    def __init__(self, color: Color = None, pieces: Iterable[P] = ()):
         self._color: Color = color
-        if len(pieces) == 0:
-            self._pieces: List[P] = self.generateDefaultPiecePlacment(color)
-        else:
-            # TODO consider adding more logic validating player pieces
-            self._king: King = Player.findKing(pieces)
-            if len(pieces) > 16:
-                raise Exception("Player has too many pieces: {}".format(pieces))
-            self._pieces: List[P] = pieces
-
-
-    @staticmethod
-    def findKing(pieces: List[P]) -> King:
-        res = list(filter(Player.isKing, pieces))
-        if len(res) == 1:
-            return res[0]
-        elif len(res) > 1:
-            raise Exception("Too many kings {}".format(res))
-        else:
-            raise Exception("No King found")
-
-    @staticmethod
-    def isKing(piece: Piece) -> King:
-        return piece.getPieceType() == PieceType.KING
-
-    def getPieces(self) -> List[P]:
-        return self._pieces
+        self._pieces: List[P] = list(pieces)
 
     def getColor(self) -> Color:
         return self._color
 
-    def getKing(self) -> King:
-        return self._king
+    def setColor(self, color: Color) -> None:
+        self._color = color
 
-    @staticmethod
-    def generateDefaultPiecePlacment(color: Color) -> List[P]:
-        pieces = Player.generateDefaultPawnRow(color)
-        pieces.extend(Player.generateDefaultRoyaltyRow(color))
-        return pieces
+    def getPieces(self) -> List[P]:
+        return self._pieces
 
-    @staticmethod
-    def generateDefaultRoyaltyRow(color: Color) -> List[P]:
-        baseRow: int = 0 if color == Color.WHITE else 7
+    def setPieces(self, pieces: Iterable[P]) -> None:
+        self._pieces = list(pieces)
 
-        pieces: List[P] = [
-            Rook(Coordinate(0, baseRow), color),
-            Knight(Coordinate(1, baseRow), color),
-            Bishop(Coordinate(2, baseRow), color),
-            Queen(Coordinate(3, baseRow), color),
-            King(Coordinate(4, baseRow), color),
-            Bishop(Coordinate(5, baseRow), color),
-            Knight(Coordinate(6, baseRow), color),
-            Rook(Coordinate(7, baseRow), color)
-        ]
-        return pieces
+    def makeAMove(self, board: Board, color: Color) -> Move:
+        """The only method a which needs to be implemented in order to extend a player and play the game
+            please note that changing the board is meaningless and only the returned move is considered.
 
-    @staticmethod
-    def generateDefaultPawnRow(color: Color) -> List[P]:
-        baseRow: int = 1 if color == Color.WHITE else 6
-
-        pieces: List[P] = []
-        for i in range(8):
-            position = Coordinate(int(i), baseRow)
-            pawn = Pawn(position, color)
-            pieces.append(pawn)
-
-        return pieces
+            :return: A Move object stating the Piece at which position should be move where
+            :param board The layout of the board at the beginning of the turn
+            :param color The Color of the piece the player should move in the current turn
+        """
+        pass

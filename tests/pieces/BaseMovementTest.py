@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Iterable, List
 from unittest import TestCase
 
@@ -10,7 +11,8 @@ from src.pieces.Piece import Piece
 class BaseMovementTest(TestCase):
 
     def _testPieceMoves(self, pieceUnderTest: MovablePiece, player1Pieces: Iterable[Piece], player2Pieces: Iterable[Piece], expectedMoves: List[Coordinate]):
-        board = Board(player1Pieces, player2Pieces)
+        pieces = chain(player1Pieces, player2Pieces)
+        board = Board(pieces)
         actualMoves = pieceUnderTest.getPossibleMoves(board)
         actualMoveDict = {}
         for am in actualMoves:

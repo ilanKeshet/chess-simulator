@@ -1,4 +1,4 @@
-from src.board.Board import Board
+from src.simulator.GameBoard import GameBoard
 from src.simulator.Player import Player
 
 
@@ -11,4 +11,8 @@ class Simulator:
         """
         This method actually invokes the players logic, and return the winner
         """
-        board = Board(self._player1.getPieces(), self._player2.getPieces())
+        board = GameBoard(self._player1, self._player2)
+        while True:
+            for player in (self._player1, self._player2):
+                pass
+            return None
