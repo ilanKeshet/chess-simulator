@@ -15,7 +15,7 @@ class TestBoard(TestCase):
         player2Pieces = [King(Coordinate(7, 7), Color.BLACK)]
         pieces = list(chain(player1Pieces, player2Pieces))
         board = Board(pieces)
-        boardPieceDictionary = board._getPieceDictionary()
+        boardPieceDictionary = board.getPieceDictionary()
         self.assertEqual(len(pieces), len(boardPieceDictionary), msg="Expected amount of pieces to match")
         for expectedPiece in pieces:
             actualPiece = boardPieceDictionary.get(expectedPiece.getPosition(), None)

@@ -1,5 +1,6 @@
 from enum import Enum, unique
 from random import random
+from typing import Iterable
 
 
 @unique
@@ -20,3 +21,7 @@ class Color(Enum):
             return Color.BLACK
         else:
             raise Exception('None or Unexpected Color encountered')
+
+    @staticmethod
+    def getColorsByPrecedence() -> Iterable['Color']:
+        return (Color.WHITE, Color.BLACK)

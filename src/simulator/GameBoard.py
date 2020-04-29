@@ -1,13 +1,16 @@
+from builtins import Exception
 from copy import deepcopy
-from typing import TypeVar, Iterable, List
+from typing import TypeVar, Iterable, List, Dict
 from itertools import chain
 
 from src.board.Board import Board
 from src.board.Color import Color
 from src.board.Coordinate import Coordinate
+from src.board.Move import Move
 from src.pieces.Bishop import Bishop
 from src.pieces.King import King
 from src.pieces.Knight import Knight
+from src.pieces.MovablePiece import MovablePiece
 from src.pieces.Pawn import Pawn
 from src.pieces.PieceType import PieceType
 from src.pieces.Queen import Queen
@@ -34,12 +37,113 @@ class GameBoard(Board):
         GameBoard.validatePlayerPieces(player2)
 
         # note we defensibly copy all pieces so no one else would have a reference to them
-        super().__init__(deepcopy(chain(player1.getPieces(), player2.getPieces())))
-
+        super().__init__(deepcopy(chain(player1.getPieces(), player2.getPieces())), printBoard=True)
+        self._moveCount: int = 0
 
     def getBoard(self) -> Board:
-        clonedPieces = deepcopy(self._getPieceDictionary().values())
+        clonedPieces = deepcopy(list(self.getPieceDictionary().values()))
         return Board(clonedPieces)
+
+    def isValidMove(self, move: Move, color: Color) -> bool:
+        try:
+            _move = Move(move.getFromPosition(), move.getToPosition())
+        except:
+            # we somehow got a bad Move object, perhaps a sub class...
+            return False
+
+        pieceDictionary: Dict[C, P] = super().getPieceDictionary()
+        pieceAtFromPosition: Piece = pieceDictionary.get(_move.getFromPosition())
+        if pieceAtFromPosition is None:
+            # Nothing to move there
+            return False
+        elif pieceAtFromPosition.getColor() != color:
+            # Tried to move piece of the wrong color
+            return False
+
+        if not GameBoard.__canPieceMoveToRequestedPosition(self.getBoard(), pieceAtFromPosition, _move.getToPosition()):
+            return False
+
+        # will move result in check
+        boardAfterMove: Board = self.getBoard().simulateMove(move)
+        if GameBoard.isInCheck(boardAfterMove, color):
+            # we are in check and the move does not resolve the check
+            return False
+
+        # we couldn't find anything wrong with the move with the currently implemented logic
+        return True
+
+    def move(self, move: Move) -> None:
+        pieceDictionary: Dict[Coordinate, Piece] = self.getPieceDictionary()
+        piece = pieceDictionary[move.getFromPosition()]
+        del pieceDictionary[move.getFromPosition()]
+        newPiece: MovablePiece = GameBoard.pieceFactory(piece.getPieceType(), move.getToPosition(), piece.getColor())
+        eatenPiece = pieceDictionary.get(move.getToPosition(), None)
+        pieceDictionary[move.getToPosition()] = newPiece
+
+        print("")
+        print("Board print number {}".format(self._moveCount))
+        self.printBoard()
+        if eatenPiece is not None:
+            print("the {} {} was eaten".format(eatenPiece.getColor().name, eatenPiece.getPieceType().name))
+
+            # TODO this exit shouldn't be here
+            if eatenPiece.getPieceType() == PieceType.KING:
+                print("the {} player has lost".format(eatenPiece.getColor().name))
+                exit()
+
+        self._moveCount += 1
+
+    @staticmethod
+    def pieceFactory(pieceType: PieceType, position: Coordinate, color: Color) -> MovablePiece:
+        # TODO replace this ugly thing with method producing a new MovablePiece of same type from each movable piece
+        if pieceType == PieceType.PAWN:
+            return Pawn(position, color)
+        elif pieceType == PieceType.KING:
+            return King(position, color)
+        elif pieceType == PieceType.QUEEN:
+            return Queen(position, color)
+        elif pieceType == PieceType.ROOK:
+            return Pawn(position, color)
+        elif pieceType == PieceType.BISHOP:
+            return Bishop(position, color)
+        elif pieceType == PieceType.KNIGHT:
+            return Knight(position, color)
+        else:
+            raise Exception("Unable to instantiate piece of type '{}'".format(pieceType))
+
+    def isCheck(self, color: Color) -> bool:
+        return GameBoard.isInCheck(self.getBoard(), color)
+
+    @staticmethod
+    def isInCheck(board: Board, color: Color) -> bool:
+        king = GameBoard.findKingOfColor(board, color)
+        opposingPieces: List[Piece] = GameBoard.findAllPiecesOfColor(board, Color.getOpositeColor(color))
+        for opposingPiece in opposingPieces:
+            if GameBoard.__canPieceMoveToRequestedPosition(board, opposingPiece, king.getPosition()):
+                return True
+        return False
+
+    @staticmethod
+    def findKingOfColor(board: Board, color: Color) -> King:
+        piecesOfColor: List[Piece] = GameBoard.findAllPiecesOfColor(board, color)
+        return GameBoard.findKing(piecesOfColor)
+
+    @staticmethod
+    def findAllPiecesOfColor(board: Board, color: Color) -> List[Piece]:
+        return filter(lambda piece: GameBoard.isPieceColor(piece, color), board.getPieceDictionary().values())
+
+    @staticmethod
+    def __canPieceMoveToRequestedPosition(board:Board, piece: Piece, toPosition: Coordinate):
+        if not isinstance(piece, MovablePiece):
+            raise Exception("Encountered non MovablePiece instance in GameBoard: '{}'".format(piece))
+        # Cast to MovablePiece
+        movablePiece: MovablePiece = piece
+        possibleMoves = movablePiece.getPossibleMoves(board)
+        if toPosition in possibleMoves:
+            return True
+        else:
+            # piece at from position can't make a the move to requested position
+            return False
 
     @staticmethod
     def generateDefaultPiecePlacementIfBothPlayersHaveNoPieces(player1: Player, player2: Player) -> None:
@@ -84,7 +188,11 @@ class GameBoard(Board):
             raise Exception("No King found")
 
     @staticmethod
-    def isKing(piece: Piece) -> King:
+    def isPieceColor(piece: Piece, color: Color) -> bool:
+        return color == piece.getColor()
+
+    @staticmethod
+    def isKing(piece: Piece) -> bool:
         return piece.getPieceType() == PieceType.KING
 
     @staticmethod

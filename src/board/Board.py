@@ -1,7 +1,9 @@
+from copy import deepcopy
 from typing import Dict, TypeVar, Iterable
 
 from src.board.Color import Color
 from src.board.Coordinate import Coordinate
+from src.board.Move import Move
 from src.pieces.Piece import Piece
 
 P = TypeVar('P', bound='Piece')
@@ -10,7 +12,7 @@ C = TypeVar('C', bound='Coordinate')
 
 class Board(object):
 
-    def __init__(self, pieces: Iterable[P]):
+    def __init__(self, pieces: Iterable[P], printBoard: bool = False):
         self._pieceDictionary: Dict[C, P] = {}
         for piece in pieces:
             prev: Piece = self._pieceDictionary.get(piece.getPosition())
@@ -19,9 +21,10 @@ class Board(object):
                     "piece placement conflict, for position '{}'. existing value: '{}' new value: '{}'."
                     .format(piece.getPosition(), prev, piece))
             self._pieceDictionary[piece.getPosition()] = piece
-        self.printBoard()
+        if printBoard:
+            self.printBoard()
 
-    def _getPieceDictionary(self) -> Dict[C, P]:
+    def getPieceDictionary(self) -> Dict[C, P]:
         return self._pieceDictionary
 
     def printBoard(self) -> None:
@@ -42,7 +45,15 @@ class Board(object):
         print("")
 
     def isVacant(self, position: Coordinate) -> bool:
-        return self._getPieceDictionary().get(position, None) is None
+        return self.getPieceDictionary().get(position, None) is None
 
     def canPieceAtPositionBeEaten(self, position: Coordinate, color: Color) -> bool:
-        return not self.isVacant(position) and self._getPieceDictionary().get(position).getColor() != color
+        return not self.isVacant(position) and self.getPieceDictionary().get(position).getColor() != color
+
+    def simulateMove(self, move: Move) -> 'Board':
+        pieceDictionary: Dict[Coordinate, Piece] = deepcopy(self.getPieceDictionary())
+        piece = pieceDictionary[move.getFromPosition()]
+        del pieceDictionary[move.getFromPosition()]
+        newPiece = Piece(piece.getPieceType(), move.getToPosition(), piece.getColor())
+        pieceDictionary[move.getToPosition()] = newPiece
+        return Board(pieceDictionary.values())
